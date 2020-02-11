@@ -36,15 +36,11 @@ class LexerLevel1 {
         // 定义状态机的状态
         this.DfaState = {
             Initial: "Initial",
-            If: "If", Id_if1:"Id_if1", Id_if2:"Id_if2",
-            Else:"Else", Id_else1:"Id_else1", Id_else2:"Id_else2", Id_else3:"Id_else3", Id_else4:"Id_else4",
             Var:"Var", Id_var1:"Id_var1", Id_var2:"Id_var2", Id_var3:"Id_var3",
             Identifier:"Identifier", GT:"GT", GE:"GE",
             Assignment:"Assignment",
             Plus:"Plus", Minus:"Minus", Star:"Star", Slash:"Slash",
             SemiColon:"SemiColon",
-            LeftParen:"LeftParen",
-            RightParen:"RightParen",
             Num:"Num"
         }
 
