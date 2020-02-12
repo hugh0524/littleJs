@@ -68,6 +68,8 @@ class SyntaxLevel1 {
      *      AdditiveExpression + MultiplicativeExpression
      *      AdditiveExpression - MultiplicativeExpression
      *
+     * 左递归解决同Multiplicative描述
+     *
      */
     additive() {
         let tokens = this.tokens;
@@ -79,7 +81,7 @@ class SyntaxLevel1 {
             if(nextToken.type === this.lexerLevel.DfaState.Plus || nextToken.type === this.lexerLevel.DfaState.Minus) {
                 nextToken = this.lexerLevel.tokenRead();
                 // 判断右侧是否是一个乘法表达式
-                let childRight = this.multiplicative();
+                let childRight = this.additive();
                 if(childRight) {
                     // 构建一个加法表达式 AstNode
                     node = new AstNode("Additive", nextToken.value);
@@ -102,6 +104,11 @@ class SyntaxLevel1 {
      *      MultiplicativeExpression * PrimaryExpression
      *      MultiplicativeExpression / PrimaryExpression
      *
+     * 由于暂时解决左递归,所以编码时对上述文法做了调整
+     * MultiplicativeExpression * PrimaryExpression -》PrimaryExpression * MultiplicativeExpression
+     *
+     * 遗留了结合性的问题!!
+     *
      * 
      */
     multiplicative() {
@@ -115,7 +122,7 @@ class SyntaxLevel1 {
             if(nextToken.type === this.lexerLevel.DfaState.Star || nextToken.type === this.lexerLevel.DfaState.Slash) {
                 nextToken = this.lexerLevel.tokenRead();
                 // 表示右侧必有一个字面量或者表达式
-                let childRight = this.primary();
+                let childRight = this.multiplicative();
                 if(childRight) {
                     // 构建一个乘法表达式 AstNode
                     node = new AstNode("Multiplicative", nextToken.value);
@@ -177,6 +184,16 @@ function main () {
     let syntaxLevel3 = new SyntaxLevel1("3*4")
 
     console.log(syntaxLevel3.astParse())
+
+    // 遗留问题:  结合性有误
+    let syntaxLevel4 = new SyntaxLevel1("2+3+4")
+
+    console.log(syntaxLevel4.astParse())
+
+    let syntaxLevel5 = new SyntaxLevel1("3*4 *4")
+
+    console.log(syntaxLevel5.astParse())
+
 
 }
 

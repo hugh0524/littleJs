@@ -219,6 +219,11 @@ function main () {
 
     lexer3.dfaParse();
     console.log(lexer3.tokens)
+
+    let lexer4 = new LexerLevel1("2 + 4 + 3");
+
+    lexer4.dfaParse();
+    console.log(lexer4.tokens)
 }
 
 // main()
