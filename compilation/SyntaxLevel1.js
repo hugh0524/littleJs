@@ -3,6 +3,9 @@
  */
 
 const LexerLevel = require("./LexerLevel1")
+const AstNode = require("./ast/AstNode")
+const BinaryAstNode = require("./ast/BinaryAstNode")
+const PrimaryAstNode = require("./ast/PrimaryAstNode")
 
 /**
  * Ast 节点对象
@@ -10,17 +13,17 @@ const LexerLevel = require("./LexerLevel1")
  * @param value
  * @constructor
  */
-function AstNode (type, value) {
-    this.type = type;
-    this.value = value || '';
-    this.children = []
-    this.parent = null
-}
-
-AstNode.prototype.addChild = function(child) {
-    this.children.push(child)
-    child.parent = this;
-}
+// function AstNode (type, value) {
+//     this.type = type;
+//     this.value = value || '';
+//     this.children = []
+//     this.parent = null
+// }
+//
+// AstNode.prototype.addChild = function(child) {
+//     this.children.push(child)
+//     child.parent = this;
+// }
 
 /**
  * 简单语法解析器
@@ -68,7 +71,6 @@ class SyntaxLevel1 {
      *      AdditiveExpression + MultiplicativeExpression
      *      AdditiveExpression - MultiplicativeExpression
      *
-     * 左递归解决同Multiplicative描述
      *
      */
     additive() {
@@ -76,26 +78,35 @@ class SyntaxLevel1 {
         let child = this.multiplicative();
         let node = child;
 
-        let nextToken = this.lexerLevel.tokenPeek()
-        if(child && nextToken) {
-            if(nextToken.type === this.lexerLevel.DfaState.Plus || nextToken.type === this.lexerLevel.DfaState.Minus) {
-                nextToken = this.lexerLevel.tokenRead();
-                // 判断右侧是否是一个乘法表达式
-                let childRight = this.additive();
-                if(childRight) {
-                    // 构建一个加法表达式 AstNode
-                    node = new AstNode("Additive", nextToken.value);
-                    node.addChild(child)
-                    node.addChild(childRight)
+        if(child ) {
+            while(true) {
+                let nextToken = this.lexerLevel.tokenPeek()
+                if(nextToken && (nextToken.type === this.lexerLevel.DfaState.Plus || nextToken.type === this.lexerLevel.DfaState.Minus)) {
+                    nextToken = this.lexerLevel.tokenRead();
+                    // 左侧已经满足是一个加法表达式, 判断右侧是否是一个乘法表达式
+                    let childRight = this.multiplicative();
+                    if(childRight) {
+                        // 构建一个加法表达式 AstNode
+                        node = new BinaryAstNode("Additive", nextToken.value, nextToken.type);
+                        node.addRightChild(child)
+                        node.addLeftChild(childRight)
+                        // 上一个语句判断已经完成, 将当前add语句设为child
+                        child = node;
+                    } else {
+                        throw Error("error Additive Expression")
+                    }
                 } else {
-                    throw Error("error Additive Expression")
+                    break;
                 }
             }
+
         }
         return node
     }
 
     /**
+     * 使用循环改写,消除左递归
+     *
      * 乘除语法
      * Multiplicative Operators
      * 简化乘法语法如下
@@ -103,12 +114,6 @@ class SyntaxLevel1 {
      *      PrimaryExpression
      *      MultiplicativeExpression * PrimaryExpression
      *      MultiplicativeExpression / PrimaryExpression
-     *
-     * 由于暂时解决左递归,所以编码时对上述文法做了调整
-     * MultiplicativeExpression * PrimaryExpression -》PrimaryExpression * MultiplicativeExpression
-     *
-     * 遗留了结合性的问题!!
-     *
      * 
      */
     multiplicative() {
@@ -117,21 +122,27 @@ class SyntaxLevel1 {
         let child = this.primary();
         let node = child;
 
-        let nextToken = this.lexerLevel.tokenPeek()
-        if(child && nextToken) {
-            if(nextToken.type === this.lexerLevel.DfaState.Star || nextToken.type === this.lexerLevel.DfaState.Slash) {
-                nextToken = this.lexerLevel.tokenRead();
-                // 表示右侧必有一个字面量或者表达式
-                let childRight = this.multiplicative();
-                if(childRight) {
-                    // 构建一个乘法表达式 AstNode
-                    node = new AstNode("Multiplicative", nextToken.value);
-                    node.addChild(child)
-                    node.addChild(childRight)
+        if(child) {
+            while(true) {
+                let nextToken = this.lexerLevel.tokenPeek()
+                if(nextToken && (nextToken.type === this.lexerLevel.DfaState.Star || nextToken.type === this.lexerLevel.DfaState.Slash)) {
+                    nextToken = this.lexerLevel.tokenRead();
+                    // 左侧满足MultiplicativeExpression ,检查右侧是否满足PrimaryExpression
+                    let childRight = this.primary();
+                    if(childRight) {
+                        // 构建一个乘法表达式 AstNode
+                        node = new BinaryAstNode("Multiplicative", nextToken.value, nextToken.type);
+                        node.addLeftChild(child)
+                        node.addRightChild(childRight)
+                        child = node;
+                    } else {
+                        throw Error("error Multiplicative Expression")
+                    }
                 } else {
-                    throw Error("error Multiplicative Expression")
+                    break;
                 }
             }
+
         }
 
         return node;
@@ -142,9 +153,11 @@ class SyntaxLevel1 {
     /**
      * primary Expressions
      * 针对最基本的预计, 我们设定文法规则如下, 只处理标识符 和 Number类型的字面量
+     * v0.0.2 支持表达式 - (expression)
      * PrimaryExpression :
      *      Identifier
-     *      Literal 
+     *      Literal
+     *      (expression)
      */
     primary() {
         let tokens = this.tokens;
@@ -156,12 +169,25 @@ class SyntaxLevel1 {
             // 判断是否符合文法规则
             if(nextToken.type === this.lexerLevel.DfaState.Identifier) {
                 nextToken = this.lexerLevel.tokenRead();
-                node = new AstNode(this.lexerLevel.DfaState.Identifier, nextToken.value);
+                node = new PrimaryAstNode(this.lexerLevel.DfaState.Identifier, nextToken.value);
             } else if(nextToken.type === this.lexerLevel.DfaState.Num) {
                 nextToken = this.lexerLevel.tokenRead();
-                node = new AstNode(this.lexerLevel.DfaState.Num, nextToken.value);
+                node = new PrimaryAstNode(this.lexerLevel.DfaState.Num, nextToken.value);
+            } else if(nextToken.type === this.lexerLevel.DfaState.LeftParen) {
+                // v0.0.2 新增支持( )简单处理
+                nextToken = this.lexerLevel.tokenRead();
+                // 检测下一个表达式
+                node = this.additive();
+                if(node) {
+                    nextToken = this.lexerLevel.tokenPeek();
+                    if(nextToken.type === this.lexerLevel.DfaState.RightParen) {
+                        this.lexerLevel.tokenRead()
+                    } else {
+                        throw Error("right paren is lost")
+                    }
+                }
             }
-            // 其他默认先不处理
+            // 剩余类型待处理
         }
 
         return node
@@ -173,26 +199,30 @@ class SyntaxLevel1 {
 
 function main () {
 
-   let syntaxLevel = new SyntaxLevel1("2+3*4")
+   let syntaxLevel = new SyntaxLevel1("(2+3)*4")
 
-   console.log(syntaxLevel.astParse())
+   let node = syntaxLevel.astParse()
+
+    // console.log(node)
+    console.log("(2+3)*4=",node.getValue())
 
     let syntaxLevel2 = new SyntaxLevel1("3*4+2")
 
-    console.log(syntaxLevel2.astParse())
+    console.log("3*4+2=",syntaxLevel2.astParse().getValue())
 
     let syntaxLevel3 = new SyntaxLevel1("3*4")
 
-    console.log(syntaxLevel3.astParse())
+    console.log("3*4=",syntaxLevel3.astParse().getValue())
 
-    // 遗留问题:  结合性有误
     let syntaxLevel4 = new SyntaxLevel1("2+3+4")
 
-    console.log(syntaxLevel4.astParse())
+    console.log("2+3+4=",syntaxLevel4.astParse().getValue())
 
-    let syntaxLevel5 = new SyntaxLevel1("3*4 *4")
+    let syntaxLevel5 = new SyntaxLevel1("3*4 *4 +2 + 5 /6")
 
-    console.log(syntaxLevel5.astParse())
+    console.log("3*4 *4 +2 + 5 /6=",syntaxLevel5.astParse().getValue())
+
+
 
 
 }

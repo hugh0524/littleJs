@@ -37,11 +37,31 @@ class LexerLevel1 {
         this.DfaState = {
             Initial: "Initial",
             Var:"Var", Id_var1:"Id_var1", Id_var2:"Id_var2", Id_var3:"Id_var3",
-            Identifier:"Identifier", GT:"GT", GE:"GE",
+            Identifier:"Identifier",
+            GT:"GT", GE:"GE", EQ: 'EQ',
+            LT: "LT", LE: "LE",
             Assignment:"Assignment",
-            Plus:"Plus", Minus:"Minus", Star:"Star", Slash:"Slash",
+            Plus:"Plus", Minus:"Minus", Star:"Star", Slash:"Slash", Remainder: "Remainder",
             SemiColon:"SemiColon",
-            Num:"Num"
+            Num:"Num",
+            LeftParen: "LeftParen",
+            RightParen: "RightParen",
+        }
+
+        this.tokenMap = {
+            "+": this.DfaState.Plus,
+            "-": this.DfaState.Minus,
+            "*": this.DfaState.Star,
+            "/": this.DfaState.Slash,
+            "%": this.DfaState.Remainder,
+            "(": this.DfaState.LeftParen,
+            ")": this.DfaState.RightParen,
+            ">": this.DfaState.GT,
+            "<": this.DfaState.LT,
+            "=": this.DfaState.Assignment,
+            ";": this.DfaState.SemiColon,
+
+
         }
 
         this.tokens = []
@@ -84,33 +104,9 @@ class LexerLevel1 {
             state = this.DfaState.Num
             this.token.type = this.DfaState.Num
             this.token.value = this.token.value + ch;
-        } else if (ch == ';') {
-            state = this.DfaState.SemiColon;
-            this.token.type = this.DfaState.SemiColon;
-            this.token.value = this.token.value + ch;
-        } else if (ch == '>') {
-            state = this.DfaState.GT;
-            this.token.type = this.DfaState.GT;
-            this.token.value = this.token.value + ch;
-        } else if (ch == '=') {
-            state = this.DfaState.Assignment;
-            this.token.type = this.DfaState.Assignment;
-            this.token.value = this.token.value + ch;
-        } else if (ch == '+') {
-            state = this.DfaState.Plus;
-            this.token.type = this.DfaState.Plus;
-            this.token.value = this.token.value + ch;
-        } else if (ch == '-') {
-            state = this.DfaState.Minus;
-            this.token.type = this.DfaState.Minus;
-            this.token.value = this.token.value + ch;
-        } else if (ch == '*') {
-            state = this.DfaState.Star;
-            this.token.type = this.DfaState.Star;
-            this.token.value = this.token.value + ch;
-        } else if (ch == '/') {
-            state = this.DfaState.Slash;
-            this.token.type = this.DfaState.Slash;
+        } else if (this.tokenMap[ch]) {
+            state = this.tokenMap[ch]
+            this.token.type = this.tokenMap[ch]
             this.token.value = this.token.value + ch;
         }
 
@@ -183,6 +179,8 @@ class LexerLevel1 {
                 case this.DfaState.Minus:
                 case this.DfaState.Star:
                 case this.DfaState.Slash:
+                case this.DfaState.LeftParen:
+                case this.DfaState.RightParen:
                 case this.DfaState.SemiColon:
                     state = this.toInitial(ch)
                     break;
@@ -207,23 +205,10 @@ module.exports = LexerLevel1
 function main () {
     let lexer = new LexerLevel1("var a = 1");
 
-    lexer.dfaParse();
-    console.log(lexer.tokens)
-
-    let lexer2 = new LexerLevel1("a > 2");
-
-    lexer2.dfaParse();
-    console.log(lexer2.tokens)
-
-    let lexer3 = new LexerLevel1("2 + 4 * 3");
-
-    lexer3.dfaParse();
-    console.log(lexer3.tokens)
-
-    let lexer4 = new LexerLevel1("2 + 4 + 3");
+    let lexer4 = new LexerLevel1("2 + (4 + 3)");
 
     lexer4.dfaParse();
     console.log(lexer4.tokens)
 }
 
-// main()
+main()
