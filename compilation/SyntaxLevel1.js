@@ -58,8 +58,49 @@ class SyntaxLevel1 {
      * 解析生成AST
      */
     astParse() {
-        // 先直接用加法表达式测算
-       return this.additive()
+        // 低优先级的表达式预测
+       return this.bitwiseShift()
+    }
+
+
+
+
+    /**
+     * 二进制操作
+     * Bitwise Shift Operators
+     *
+     * ShiftExpression : 
+     *      AdditiveExpression
+     *      ShiftExpression << AdditiveExpression 
+     *      ShiftExpression >> AdditiveExpression 
+     *      ShiftExpression >>> AdditiveExpression
+     */
+    bitwiseShift() {
+
+        let child = this.additive();
+        let node = child;
+        if(child ) {
+            while(true) {
+                let nextToken = this.lexerLevel.tokenPeek()
+                if(nextToken && (nextToken.type === this.lexerLevel.DfaState.LeftShirt || nextToken.type === this.lexerLevel.DfaState.RightShirt || nextToken.type === this.lexerLevel.DfaState.RightShirt2)) {
+                    nextToken = this.lexerLevel.tokenRead();
+                    let childRight = this.additive();
+                    if(childRight) {
+                        // 构建一个加法表达式 AstNode
+                        node = new BinaryAstNode("BitwiseShift", nextToken.value, nextToken.type);
+                        node.addRightChild(child)
+                        node.addLeftChild(childRight)
+                        child = node;
+                    } else {
+                        throw Error("error bitwise Expression")
+                    }
+                } else {
+                    break;
+                }
+            }
+        }
+
+        return node
     }
 
     /**
@@ -223,7 +264,9 @@ function main () {
     console.log("3*4 *4 +2 + 5 /6=",syntaxLevel5.astParse().getValue())
 
 
+    let syntaxLevel6 = new SyntaxLevel1("1>>1+2")
 
+    console.log("1>>1+2=",syntaxLevel6.astParse().getValue())
 
 }
 

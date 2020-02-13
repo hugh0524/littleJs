@@ -22,6 +22,14 @@ class BinaryAstNode  extends AstNode{
                 return this.left.getValue() * this.right.getValue();
             case "Slash":
                 return this.left.getValue() / this.right.getValue();
+            case "LeftShirt":
+                return this.left.getValue() << this.right.getValue();
+            case "RightShirt":
+                return this.left.getValue() >>> this.right.getValue();
+            case "RightShirt2":
+                return this.left.getValue() >>> this.right.getValue();
+            case "Mod":
+                return this.left.getValue() % this.right.getValue();
         }
         return NaN
     }

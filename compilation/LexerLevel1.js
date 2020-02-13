@@ -41,11 +41,14 @@ class LexerLevel1 {
             GT:"GT", GE:"GE", EQ: 'EQ',
             LT: "LT", LE: "LE",
             Assignment:"Assignment",
-            Plus:"Plus", Minus:"Minus", Star:"Star", Slash:"Slash", Remainder: "Remainder",
+            Plus:"Plus", Minus:"Minus", Star:"Star", Slash:"Slash", Mod: "Mod",
+            LeftShirt: "LeftShirt", RightShirt: "RightShirt", RightShirt2: "RightShirt2",
+            DoublePlus: "DoublePlus",DoubleMinus: "DoubleMinus",
             SemiColon:"SemiColon",
             Num:"Num",
             LeftParen: "LeftParen",
             RightParen: "RightParen",
+
         }
 
         this.tokenMap = {
@@ -53,7 +56,7 @@ class LexerLevel1 {
             "-": this.DfaState.Minus,
             "*": this.DfaState.Star,
             "/": this.DfaState.Slash,
-            "%": this.DfaState.Remainder,
+            "%": this.DfaState.Mod,
             "(": this.DfaState.LeftParen,
             ")": this.DfaState.RightParen,
             ">": this.DfaState.GT,
@@ -139,7 +142,7 @@ class LexerLevel1 {
                         state = this.DfaState.Id_var2
                         this.token.value = this.token.value + ch;
                     } else if(Utils.isAlpha(ch) || Utils.isNum(ch)){
-                        state = this.switchState(this.DfaState.Identifier)
+                        state = this.switchState(this.DfaState.Identifier, ch)
                     } else {
                         state = this.toInitial(ch)
                     }
@@ -149,21 +152,21 @@ class LexerLevel1 {
                         state = this.DfaState.Id_var2
                         this.token.value = this.token.value + ch;
                     } else if(Utils.isAlpha(ch) || Utils.isNum(ch)){
-                        state = this.switchState(this.DfaState.Identifier)
+                        state = this.switchState(this.DfaState.Identifier, ch)
                     } else {
                         state = this.toInitial(ch)
                     }
                     break;
                 case this.DfaState.Id_var3:
                     if(Utils.isAlpha(ch) || Utils.isNum(ch)){
-                        state = this.switchState(this.DfaState.Identifier)
+                        state = this.switchState(this.DfaState.Identifier,ch)
                     } else {
                         state = this.toInitial(ch)
                     }
                     break;
                 case this.DfaState.Identifier:
                     if(Utils.isAlpha(ch) || Utils.isNum(ch)){
-                        state = this.switchState(this.DfaState.Identifier)
+                        state = this.switchState(this.DfaState.Identifier, ch)
                     } else {
                         state = this.toInitial(ch)
                     }
@@ -174,11 +177,48 @@ class LexerLevel1 {
                     }
                     break;
                 case this.DfaState.GT:
-                case this.DfaState.Assignment:
+                    if(ch === ">") {
+                        state = this.switchState(this.DfaState.LeftShirt, ch)
+                    } else {
+                        state = this.toInitial(ch)
+                    }
+                    break;
+                case this.DfaState.LT:
+                    if(ch === "<") {
+                        state = this.switchState(this.DfaState.RightShirt, ch)
+                    } else {
+                        state = this.toInitial(ch)
+                    }
+                    break;
+                case this.DfaState.RightShirt:
+                    if(ch === "<") {
+                        state = this.switchState(this.DfaState.RightShirt2, ch)
+                    } else {
+                        state = this.toInitial(ch)
+                    }
+                    break;
                 case this.DfaState.Plus:
+                    if(ch === "+") {
+                        state = this.switchState(this.DfaState.DoublePlus, ch)
+                    } else {
+                        state = this.toInitial(ch)
+                    }
+                    break;
                 case this.DfaState.Minus:
+                    if(ch === "-") {
+                        state = this.switchState(this.DfaState.DoubleMinus, ch)
+                    } else {
+                        state = this.toInitial(ch)
+                    }
+                    break;
+                case this.DfaState.LeftShirt:
+                case this.DfaState.RightShirt2:
+                case this.DfaState.Assignment:
+                case this.DfaState.DoublePlus:
+                case this.DfaState.DoubleMinus:
                 case this.DfaState.Star:
                 case this.DfaState.Slash:
+                case this.DfaState.Mod:
                 case this.DfaState.LeftParen:
                 case this.DfaState.RightParen:
                 case this.DfaState.SemiColon:
@@ -205,10 +245,15 @@ module.exports = LexerLevel1
 function main () {
     let lexer = new LexerLevel1("var a = 1");
 
-    let lexer4 = new LexerLevel1("2 + (4 + 3)");
+    // let lexer4 = new LexerLevel1("2 + (4 + 3)");
+    //
+    // lexer4.dfaParse();
+    // console.log(lexer4.tokens)
 
-    lexer4.dfaParse();
-    console.log(lexer4.tokens)
+    let lexer5 = new LexerLevel1("++a");
+
+    lexer5.dfaParse();
+    console.log(lexer5.tokens)
 }
 
 main()
