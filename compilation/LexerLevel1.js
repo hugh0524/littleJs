@@ -46,8 +46,10 @@ class LexerLevel1 {
             DoublePlus: "DoublePlus",DoubleMinus: "DoubleMinus",
             SemiColon:"SemiColon",
             Num:"Num",
-            LeftParen: "LeftParen",
-            RightParen: "RightParen",
+            LeftParen: "LeftParen",RightParen: "RightParen", // ()
+            LeftBrace: "LeftBrace", RightBrace:"RightBrace", // {}
+            If: "If", If_1: "If_1",
+            Else: "Else", Else_1: "Else_1",Else_2: "Else_2",Else_3: "Else_3"
 
         }
 
@@ -63,6 +65,8 @@ class LexerLevel1 {
             "<": this.DfaState.LT,
             "=": this.DfaState.Assignment,
             ";": this.DfaState.SemiColon,
+            "{": this.DfaState.LeftBrace,
+            "}": this.DfaState.RightBrace
 
 
         }
@@ -101,6 +105,10 @@ class LexerLevel1 {
         if(Utils.isAlpha(ch)) {
             if(ch === 'v') {
                 state = this.DfaState.Id_var1
+            } else if(ch === 'i'){
+                state = this.DfaState.If_1
+            } else if(ch === 'e'){
+                state = this.DfaState.Else_1
             } else {
                 state = this.DfaState.Identifier
             }
@@ -168,6 +176,56 @@ class LexerLevel1 {
                         state = this.toInitial(ch)
                     }
                     break;
+                case this.DfaState.If_1:
+                    if(ch === 'f') {
+                        state = this.switchState(this.DfaState.If, ch)
+                    } else if(Utils.isAlpha(ch) || Utils.isNum(ch)){
+                        state = this.switchState(this.DfaState.Identifier,ch)
+                    } else {
+                        state = this.toInitial(ch)
+                    }
+                    break;
+                case this.DfaState.If:
+                    if(Utils.isAlpha(ch) || Utils.isNum(ch)){
+                        state = this.switchState(this.DfaState.Identifier,ch)
+                    } else {
+                        state = this.toInitial(ch)
+                    }
+                    break;
+                case this.DfaState.Else_1:
+                    if(ch === 'l') {
+                        state = this.switchState(this.DfaState.Else_2, ch)
+                    } else if(Utils.isAlpha(ch) || Utils.isNum(ch)){
+                        state = this.switchState(this.DfaState.Identifier,ch)
+                    } else {
+                        state = this.toInitial(ch)
+                    }
+                    break;
+                case this.DfaState.Else_2:
+                    if(ch === 's') {
+                        state = this.switchState(this.DfaState.Else_3, ch)
+                    } else if(Utils.isAlpha(ch) || Utils.isNum(ch)){
+                        state = this.switchState(this.DfaState.Identifier,ch)
+                    } else {
+                        state = this.toInitial(ch)
+                    }
+                    break;
+                case this.DfaState.Else_3:
+                    if(ch === 'e') {
+                        state = this.switchState(this.DfaState.Else, ch)
+                    } else if(Utils.isAlpha(ch) || Utils.isNum(ch)){
+                        state = this.switchState(this.DfaState.Identifier,ch)
+                    } else {
+                        state = this.toInitial(ch)
+                    }
+                    break;
+                case this.DfaState.Else:
+                    if(Utils.isAlpha(ch) || Utils.isNum(ch)){
+                        state = this.switchState(this.DfaState.Identifier,ch)
+                    } else {
+                        state = this.toInitial(ch)
+                    }
+                    break;
                 case this.DfaState.Identifier:
                     if(Utils.isAlpha(ch) || Utils.isNum(ch)){
                         state = this.switchState(this.DfaState.Identifier, ch)
@@ -183,6 +241,8 @@ class LexerLevel1 {
                 case this.DfaState.GT:
                     if(ch === ">") {
                         state = this.switchState(this.DfaState.LeftShirt, ch)
+                    } else if(ch === "=") {
+                        state = this.switchState(this.DfaState.GE, ch)
                     } else {
                         state = this.toInitial(ch)
                     }
@@ -190,6 +250,8 @@ class LexerLevel1 {
                 case this.DfaState.LT:
                     if(ch === "<") {
                         state = this.switchState(this.DfaState.RightShirt, ch)
+                    } else if(ch === "=") {
+                        state = this.switchState(this.DfaState.LE, ch)
                     } else {
                         state = this.toInitial(ch)
                     }
@@ -223,8 +285,12 @@ class LexerLevel1 {
                 case this.DfaState.Star:
                 case this.DfaState.Slash:
                 case this.DfaState.Mod:
+                case this.DfaState.GE: 
+                case this.DfaState.LE:
                 case this.DfaState.LeftParen:
                 case this.DfaState.RightParen:
+                case this.DfaState.LeftBrace:
+                case this.DfaState.RightBrace:
                 case this.DfaState.SemiColon:
                     state = this.toInitial(ch)
                     break;
@@ -247,20 +313,11 @@ module.exports = LexerLevel1
 // test
 
 function main () {
-    let lexer = new LexerLevel1("var a = 1");
+    let lexer = new LexerLevel1("if(a > 2){ a= a+2;}");
 
     lexer.dfaParse();
     console.log(lexer.tokens)
 
-    // let lexer4 = new LexerLevel1("2 + (4 + 3)");
-    //
-    // lexer4.dfaParse();
-    // console.log(lexer4.tokens)
-
-    // let lexer5 = new LexerLevel1("++a");
-    //
-    // lexer5.dfaParse();
-    // console.log(lexer5.tokens)
 }
 
-// main()
+main()

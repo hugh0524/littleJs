@@ -13,6 +13,7 @@ class BinaryAstNode  extends AstNode{
     }
 
     getValue(){
+        // console.log('=====binary params', this.opera, this.left.getValue(), this.right.getValue())
         switch(this.opera) {
             case "Plus":
                 return this.left.getValue() + this.right.getValue();
@@ -30,6 +31,14 @@ class BinaryAstNode  extends AstNode{
                 return this.left.getValue() >>> this.right.getValue();
             case "Mod":
                 return this.left.getValue() % this.right.getValue();
+            case "GT":
+                return this.left.getValue() > this.right.getValue();
+            case "GE":
+                return this.left.getValue() >= this.right.getValue();
+            case "LT":
+                return this.left.getValue() < this.right.getValue();
+            case "LE":
+                return this.left.getValue() <= this.right.getValue();
         }
         return NaN
     }

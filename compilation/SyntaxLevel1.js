@@ -8,6 +8,8 @@ const BinaryAstNode = require("./ast/BinaryAstNode")
 const PrimaryAstNode = require("./ast/PrimaryAstNode")
 const AssignmentAstNode = require("./ast/AssignmentAstNode")
 const DeclarationAstNode = require("./ast/DeclarationAstNode")
+const IfStatementAstNode = require("./ast/IfStatementAstNode")
+const BlockAstNode = require("./ast/BlockAstNode")
 
 const stack = require("./Stack")
 
@@ -43,6 +45,7 @@ class SyntaxLevel1 {
 
     /**
      * 解析生成AST
+     * v0.0.4 ShiftExpression -> RelationalExpression
      */
     astParse() {
         // 涉及多个语句, 先初始化一个根节点
@@ -50,17 +53,26 @@ class SyntaxLevel1 {
         let nextToken = this.lexerLevel.tokenPeek()
         while(nextToken) {
 
-            // console.log("=====2",nextToken)
-            // 1
+            // console.log("====1", nextToken)
             let cv = this.variable();
-            // console.log("====3.1" ,cv)
+            // console.log("====2", cv)
+
+            /**
+             * v0.0.4 新增if
+             */
+            if(!cv) {
+                cv = this.ifStatement();
+                // console.log("====4", cv)
+            }
+
             if(!cv) {
                 cv = this.assignment()
+                // console.log("====3", cv)
             }
-            // console.log("====3.2" ,cv)
-            // 2
+
+
             if(!cv) {
-                cv = this.bitwiseShift()
+                cv = this.relational()
             }
 
             if(cv) {
@@ -82,8 +94,144 @@ class SyntaxLevel1 {
      */
     exe() {
         let n = this.astParse()
-        console
         return n.getValue();
+    }
+
+
+    /**
+     * v0.0.4
+     * 
+     * 语法如下
+     * IfStatement :
+     *     if ( Expression ) Statement else Statement 
+     *     if ( Expression ) Statement
+     *
+     */
+    ifStatement() {
+        let node = null;
+        
+        let nextToken = this.lexerLevel.tokenPeek()
+        // 预判进入If语句
+        if(nextToken && nextToken.type === this.lexerLevel.DfaState.If) {
+            this.lexerLevel.tokenRead();
+            // 构建一个if Ast
+            node = new IfStatementAstNode('ifStatement', 'if')
+            nextToken = this.lexerLevel.tokenPeek()
+            if(nextToken && nextToken.type === this.lexerLevel.DfaState.LeftParen) {
+                this.lexerLevel.tokenRead();
+                // test语句检查 TODO 暂时使用该 Expression
+                let childTest = this.relational();
+                if(childTest) {
+                    node.addTest(childTest)
+                    // 判断 )
+                    nextToken = this.lexerLevel.tokenPeek()
+                    if(nextToken && nextToken.type === this.lexerLevel.DfaState.RightParen) {
+                        this.lexerLevel.tokenRead();
+                        // 开始进入 statement区域判断
+                        let child1 = this.statement();
+                        if(child1) {
+                            node.addConsequent(child1)
+                        }else {
+                            throw Error("lost consequent block in if statement")
+                        }
+                        // 判断else语句
+                        nextToken = this.lexerLevel.tokenPeek()
+                        if(nextToken && nextToken.type === this.lexerLevel.DfaState.Else) {
+                            this.lexerLevel.tokenRead();
+                            // 构建一个else代码块
+                            let child2 = this.statement();
+                            if(child2) {
+                                node.addAlternate(child2)
+                            }else {
+                                throw Error("lost alternate block in if statement")
+                            }
+                        }
+                    } else {
+                        throw Error("lost rightParen in if test")
+                    }
+                } else {
+                    throw Error("lost test expression in if statement")
+                }
+
+            } else {
+                throw Error("lost leftParen in if test")
+            }
+        }
+        return node;
+    }
+
+
+    /**
+     * v0.0.4
+     *
+     * 代码块 以{开始, 以}结束
+     * Block :
+     *   { StatementList(opt) }
+     *
+     */
+    block() {
+        let node = null;
+        let nextToken = this.lexerLevel.tokenPeek()
+        if(nextToken && nextToken.type === this.lexerLevel.DfaState.LeftBrace) {
+            node = new BlockAstNode("Block", "")
+            this.lexerLevel.tokenRead();
+            nextToken = this.lexerLevel.tokenPeek()
+            // todo 异常判断
+            while(nextToken && nextToken.type !== this.lexerLevel.DfaState.RightBrace){
+                let child = this.statement();
+                if(child) {
+                    // 构建子级ast
+                    node.addChild(child)
+                }
+                nextToken = this.lexerLevel.tokenPeek()
+            }
+            if(nextToken && nextToken.type === this.lexerLevel.DfaState.RightBrace) {
+                this.lexerLevel.tokenRead();
+            }
+        }
+
+        return node
+    }
+
+    /**
+     * v0.0.4  暂时只支持其中部分语句
+     *
+     * Statement :
+     *   Block
+     *   VariableStatement
+     *   EmptyStatement
+     *   ExpressionStatement
+     *   IfStatement
+     *   IterationStatement
+     *   ContinueStatement
+     *   BreakStatement
+     *   ReturnStatement
+     *   WithStatement
+     *   LabelledStatement
+     *   SwitchStatement
+     *   ThrowStatement
+     *   TryStatement
+     *   DebuggerStatement
+     *
+     */
+    statement() {
+        let node = this.block()
+        if(!node) {
+            node = this.variable()
+        }
+        if(!node) {
+            node = this.ifStatement()
+        }
+        if(!node) {
+            node = this.assignment()
+        }
+        if(!node) {
+            // todo
+            node = this.relational()
+        }
+
+
+        return node
     }
 
 
@@ -140,16 +288,17 @@ class SyntaxLevel1 {
 
     /**
      * v0.0.3
+     * v0.0.4  ShiftExpression -> RelationalExpression
      * 赋值语句
      * 简化语法如下
      * AssignmentExpression :
-     *      ShiftExpression
+     *      RelationalExpression
      *      PrimaryExpression = AssignmentExpression
      *
      */
     assignment() {
 
-        let child = this.bitwiseShift();
+        let child = this.relational();
         let node = child;
 
         let nextToken = this.lexerLevel.tokenPeek()
@@ -158,7 +307,7 @@ class SyntaxLevel1 {
             this.lexerLevel.tokenRead();
             // 预测是一个赋值语句
             node = new AssignmentAstNode("Assignment")
-            let childRight = this.bitwiseShift();
+            let childRight = this.relational();
             if(childRight) {
                 node.addLeftChild(child)
                 node.addRightChild(childRight)
@@ -174,38 +323,52 @@ class SyntaxLevel1 {
             }
         }
 
-        // if(nextToken && nextToken.type === this.lexerLevel.DfaState.Identifier) {
-        //     // 定义一个Identifier类型节点
-        //     // child = this.bitwiseShift();
-        //     tempToken = nextToken;
-        //     nextToken = this.lexerLevel.tokenPeek();
-        //     if(nextToken && nextToken.type === this.lexerLevel.DfaState.Assignment) {
-        //         this.lexerLevel.tokenRead();
-        //         // 预测是一个赋值语句
-        //         node = new AssignmentAstNode("Assignment")
-        //         let childRight = this.bitwiseShift();
-        //         if(childRight) {
-        //             node.addLeftChild(child)
-        //             node.addRightChild(child)
-        //             // 判断最后一个;
-        //             nextToken = this.lexerLevel.tokenPeek();
-        //             if(nextToken && nextToken.type === this.lexerLevel.DfaState.SemiColon) {
-        //                 this.lexerLevel.tokenRead(); // 读取出分号
-        //             } else {
-        //                 throw Error("lost SemiColon in the end of assignment expression")
-        //             }
-        //         } else {
-        //             throw Error("error assignment expression")
-        //         }
-        //     } else {
-        //         node =  child ; // TODO
-        //     }
-        // }
-
         return node;
 
     }
 
+
+    /**
+     * v0.0.4
+     * 为支持if等语句, 新增关系运算符操作
+     * 关系运算符
+     * 
+     * 简化如下
+     * RelationalExpression : 
+     *     ShiftExpression
+     *     RelationalExpression < ShiftExpression 
+     *     RelationalExpression > ShiftExpression 
+     *     RelationalExpression <= ShiftExpression 
+     *     RelationalExpression >= ShiftExpression
+     *    
+     *
+     */
+    relational() {
+        let child = this.bitwiseShift();
+        let node = child;
+        if(child ) {
+            while(true) {
+                let nextToken = this.lexerLevel.tokenPeek()
+                if(nextToken && (nextToken.type === this.lexerLevel.DfaState.GT || nextToken.type === this.lexerLevel.DfaState.GE || nextToken.type === this.lexerLevel.DfaState.LE || nextToken.type === this.lexerLevel.DfaState.LT)) {
+                    nextToken = this.lexerLevel.tokenRead();
+                    let childRight = this.bitwiseShift();
+                    if(childRight) {
+                        // 构建一个加法表达式 AstNode
+                        node = new BinaryAstNode("Relational", nextToken.value, nextToken.type);
+                        node.addLeftChild(child)
+                        node.addRightChild(childRight)
+                        child = node;
+                    } else {
+                        throw Error("error relational Expression")
+                    }
+                } else {
+                    break;
+                }
+            }
+        }
+
+        return node
+    }
 
 
     /**
@@ -232,8 +395,8 @@ class SyntaxLevel1 {
                     if(childRight) {
                         // 构建一个加法表达式 AstNode
                         node = new BinaryAstNode("BitwiseShift", nextToken.value, nextToken.type);
-                        node.addRightChild(child)
-                        node.addLeftChild(childRight)
+                        node.addLeftChild(child)
+                        node.addRightChild(childRight)
                         child = node;
                     } else {
                         throw Error("error bitwise Expression")
@@ -248,6 +411,7 @@ class SyntaxLevel1 {
     }
 
     /**
+     * v0.0.4 修复ast left right赋值bug
      * 加减语法
      * Additive Operators
      * 简化如下
@@ -273,8 +437,8 @@ class SyntaxLevel1 {
                     if(childRight) {
                         // 构建一个加法表达式 AstNode
                         node = new BinaryAstNode("Additive", nextToken.value, nextToken.type);
-                        node.addRightChild(child)
-                        node.addLeftChild(childRight)
+                        node.addLeftChild(child)
+                        node.addRightChild(childRight)
                         // 上一个语句判断已经完成, 将当前add语句设为child
                         child = node;
                     } else {
@@ -385,21 +549,45 @@ class SyntaxLevel1 {
 function main () {
 
    let syntaxLevel = new SyntaxLevel1(`
-   var a =2;
-   var b = 3;
-   a = a * b + 3;
+   if(a >2) {
+    a = 3;
+   }
+   `)
+   console.log("test1----", syntaxLevel.astParse())
+
+
+    let syntaxLevel2 = new SyntaxLevel1(`
+   if(a >2) {
+    a = 3;
+   }else {
+    a=4;
+   }
+   `)
+    console.log("test2----", syntaxLevel2.astParse())
+
+    // 测试二义性
+    let syntaxLevel3 = new SyntaxLevel1(`
+   if(a >2) 
+    if(a<4)
+     a=3;
+   else 
+    a=4;
    
    `)
+    console.log("test3----", syntaxLevel3.astParse())
 
-   console.log( syntaxLevel.exe())
-
-    // 测试异常
-    let syntaxLevel2 = new SyntaxLevel1(`
-   var a =2;
-   var b = 3;
-   a = a * c + 3;
+    // 测试运行计算
+    let syntaxLevel4 = new SyntaxLevel1(`
+   var a = 5;
+   if(a >2) 
+    if(a<4)
+     a=3;
+   else 
+    a=4;
+   
+   a= a+1;
    `)
-    console.log( syntaxLevel2.exe())
+    console.log("test4----", syntaxLevel4.exe())
 }
 
 main()
