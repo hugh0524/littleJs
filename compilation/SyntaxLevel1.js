@@ -6,24 +6,11 @@ const LexerLevel = require("./LexerLevel1")
 const AstNode = require("./ast/AstNode")
 const BinaryAstNode = require("./ast/BinaryAstNode")
 const PrimaryAstNode = require("./ast/PrimaryAstNode")
+const AssignmentAstNode = require("./ast/AssignmentAstNode")
+const DeclarationAstNode = require("./ast/DeclarationAstNode")
 
-/**
- * Ast 节点对象
- * @param type
- * @param value
- * @constructor
- */
-// function AstNode (type, value) {
-//     this.type = type;
-//     this.value = value || '';
-//     this.children = []
-//     this.parent = null
-// }
-//
-// AstNode.prototype.addChild = function(child) {
-//     this.children.push(child)
-//     child.parent = this;
-// }
+const stack = require("./Stack")
+
 
 /**
  * 简单语法解析器
@@ -37,9 +24,9 @@ const PrimaryAstNode = require("./ast/PrimaryAstNode")
  * 3. 定义additive Expression
  *
  * 解析如下语法:
- *   3 * 4 + 2
- *   3 * 4
- *   2 + 3 * 4
+ *   var a =1;
+ *   var b = 2;
+ *   a = b +3;
  *
  */
 class SyntaxLevel1 {
@@ -58,14 +45,171 @@ class SyntaxLevel1 {
      * 解析生成AST
      */
     astParse() {
-        // 低优先级的表达式预测
-       return this.bitwiseShift()
+        // 涉及多个语句, 先初始化一个根节点
+        let node = new AstNode("Program", "");
+        let nextToken = this.lexerLevel.tokenPeek()
+        while(nextToken) {
+
+            // console.log("=====2",nextToken)
+            // 1
+            let cv = this.variable();
+            // console.log("====3.1" ,cv)
+            if(!cv) {
+                cv = this.assignment()
+            }
+            // console.log("====3.2" ,cv)
+            // 2
+            if(!cv) {
+                cv = this.bitwiseShift()
+            }
+
+            if(cv) {
+                node.addChild(cv)
+            } else {
+                throw Error("not support current expression!")
+            }
+
+            nextToken = this.lexerLevel.tokenPeek()
+        }
+
+
+       return node
+    }
+
+    /**
+     * v0.0.3
+     * 新增运行方法, 用于解析ast获取到对应的结果
+     */
+    exe() {
+        let n = this.astParse()
+        console
+        return n.getValue();
+    }
+
+
+    /**
+     * v0.0.3
+     * 变量声明语句
+     *
+     * 简化语法如下
+     * VariableStatement :
+     *      var VariableDeclaration ;
+     *
+     * VariableDeclaration:
+     *      Identifier Initialiser(opt)
+     *
+     * Initialiser:
+     *      = AssignmentExpression
+     *
+     */
+    variable() {
+
+        let node = null;
+        let nextToken = this.lexerLevel.tokenPeek()
+        let tempToken = nextToken;
+        if(nextToken && nextToken.type === this.lexerLevel.DfaState.Var) {
+            node = new DeclarationAstNode("Declaration")
+            this.lexerLevel.tokenRead();
+            nextToken = this.lexerLevel.tokenPeek()
+            if(nextToken && nextToken.type === this.lexerLevel.DfaState.Identifier) {
+                // 表示var + 标识符
+                let childId = new PrimaryAstNode(nextToken.type, nextToken.value)
+                this.lexerLevel.tokenRead();
+                node.addLeftChild(childId)
+                // 检查是否有表达式
+                nextToken = this.lexerLevel.tokenPeek()
+                if(nextToken && nextToken.type === this.lexerLevel.DfaState.Assignment) {
+                    this.lexerLevel.tokenRead();
+                    let childInit = this.assignment();
+                    if(childInit) {
+                        node.addRightChild(childInit)
+                    } else {
+                        throw Error("no assignment expression after Assignment ")
+                    }
+                }
+                nextToken = this.lexerLevel.tokenPeek()
+                if(nextToken && nextToken.type === this.lexerLevel.DfaState.SemiColon) {
+                    this.lexerLevel.tokenRead();
+                }
+            } else {
+                throw Error("no Identifier after Var ")
+            }
+        }
+        return node;
+    }
+
+    /**
+     * v0.0.3
+     * 赋值语句
+     * 简化语法如下
+     * AssignmentExpression :
+     *      ShiftExpression
+     *      PrimaryExpression = AssignmentExpression
+     *
+     */
+    assignment() {
+
+        let child = this.bitwiseShift();
+        let node = child;
+
+        let nextToken = this.lexerLevel.tokenPeek()
+        let tempToken = null;
+        if(nextToken && nextToken.type === this.lexerLevel.DfaState.Assignment) {
+            this.lexerLevel.tokenRead();
+            // 预测是一个赋值语句
+            node = new AssignmentAstNode("Assignment")
+            let childRight = this.bitwiseShift();
+            if(childRight) {
+                node.addLeftChild(child)
+                node.addRightChild(childRight)
+                // 判断最后一个;
+                nextToken = this.lexerLevel.tokenPeek();
+                if(nextToken && nextToken.type === this.lexerLevel.DfaState.SemiColon) {
+                    this.lexerLevel.tokenRead(); // 读取出分号
+                } else {
+                    throw Error("lost SemiColon in the end of assignment expression")
+                }
+            } else {
+                throw Error("error assignment expression")
+            }
+        }
+
+        // if(nextToken && nextToken.type === this.lexerLevel.DfaState.Identifier) {
+        //     // 定义一个Identifier类型节点
+        //     // child = this.bitwiseShift();
+        //     tempToken = nextToken;
+        //     nextToken = this.lexerLevel.tokenPeek();
+        //     if(nextToken && nextToken.type === this.lexerLevel.DfaState.Assignment) {
+        //         this.lexerLevel.tokenRead();
+        //         // 预测是一个赋值语句
+        //         node = new AssignmentAstNode("Assignment")
+        //         let childRight = this.bitwiseShift();
+        //         if(childRight) {
+        //             node.addLeftChild(child)
+        //             node.addRightChild(child)
+        //             // 判断最后一个;
+        //             nextToken = this.lexerLevel.tokenPeek();
+        //             if(nextToken && nextToken.type === this.lexerLevel.DfaState.SemiColon) {
+        //                 this.lexerLevel.tokenRead(); // 读取出分号
+        //             } else {
+        //                 throw Error("lost SemiColon in the end of assignment expression")
+        //             }
+        //         } else {
+        //             throw Error("error assignment expression")
+        //         }
+        //     } else {
+        //         node =  child ; // TODO
+        //     }
+        // }
+
+        return node;
+
     }
 
 
 
-
     /**
+     * v0.0.2
      * 二进制操作
      * Bitwise Shift Operators
      *
@@ -240,34 +384,22 @@ class SyntaxLevel1 {
 
 function main () {
 
-   let syntaxLevel = new SyntaxLevel1("(2+3)*4")
+   let syntaxLevel = new SyntaxLevel1(`
+   var a =2;
+   var b = 3;
+   a = a * b + 3;
+   
+   `)
 
-   let node = syntaxLevel.astParse()
+   console.log( syntaxLevel.exe())
 
-    // console.log(node)
-    console.log("(2+3)*4=",node.getValue())
-
-    let syntaxLevel2 = new SyntaxLevel1("3*4+2")
-
-    console.log("3*4+2=",syntaxLevel2.astParse().getValue())
-
-    let syntaxLevel3 = new SyntaxLevel1("3*4")
-
-    console.log("3*4=",syntaxLevel3.astParse().getValue())
-
-    let syntaxLevel4 = new SyntaxLevel1("2+3+4")
-
-    console.log("2+3+4=",syntaxLevel4.astParse().getValue())
-
-    let syntaxLevel5 = new SyntaxLevel1("3*4 *4 +2 + 5 /6")
-
-    console.log("3*4 *4 +2 + 5 /6=",syntaxLevel5.astParse().getValue())
-
-
-    let syntaxLevel6 = new SyntaxLevel1("1>>1+2")
-
-    console.log("1>>1+2=",syntaxLevel6.astParse().getValue())
-
+    // 测试异常
+    let syntaxLevel2 = new SyntaxLevel1(`
+   var a =2;
+   var b = 3;
+   a = a * c + 3;
+   `)
+    console.log( syntaxLevel2.exe())
 }
 
 main()

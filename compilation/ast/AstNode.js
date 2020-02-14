@@ -18,7 +18,12 @@ class AstNode{
 
 
     getValue() {
-        return this.value
+        let last = ''
+        for(let i =0; i< this.children.length; i++){
+            let child = this.children[i]
+            last = child.getValue()
+        }
+        return last
     }
 }
 

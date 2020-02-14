@@ -77,6 +77,9 @@ class LexerLevel1 {
     tokenRead() {
         return this.tokens.length > 0 ? this.tokens.shift() : null
     }
+    tokenUnRead(token) {
+        this.tokens.unshift(token)
+    }
     tokenPeek() {
         return this.tokens[0]
     }
@@ -101,7 +104,7 @@ class LexerLevel1 {
             } else {
                 state = this.DfaState.Identifier
             }
-            this.token.type = this.DfaState.Identifier
+            this.token.type = state
             this.token.value = this.token.value + ch;
         } else if(Utils.isNum(ch)) {
             state = this.DfaState.Num
@@ -124,6 +127,9 @@ class LexerLevel1 {
 
     /**
      * 运行自动机,解析出token
+     *
+     * fix : v0.0.1, v0.0.2 var语言的bug
+     * 
      */
     dfaParse() {
         let code = this.code
@@ -139,8 +145,7 @@ class LexerLevel1 {
                     break;
                 case this.DfaState.Id_var1:
                     if(ch === 'a') {
-                        state = this.DfaState.Id_var2
-                        this.token.value = this.token.value + ch;
+                        state = this.switchState(this.DfaState.Id_var2, ch)
                     } else if(Utils.isAlpha(ch) || Utils.isNum(ch)){
                         state = this.switchState(this.DfaState.Identifier, ch)
                     } else {
@@ -149,15 +154,14 @@ class LexerLevel1 {
                     break;
                 case this.DfaState.Id_var2:
                     if(ch === 'r') {
-                        state = this.DfaState.Id_var2
-                        this.token.value = this.token.value + ch;
+                        state = this.switchState(this.DfaState.Var, ch)
                     } else if(Utils.isAlpha(ch) || Utils.isNum(ch)){
                         state = this.switchState(this.DfaState.Identifier, ch)
                     } else {
                         state = this.toInitial(ch)
                     }
                     break;
-                case this.DfaState.Id_var3:
+                case this.DfaState.Var:
                     if(Utils.isAlpha(ch) || Utils.isNum(ch)){
                         state = this.switchState(this.DfaState.Identifier,ch)
                     } else {
@@ -245,15 +249,18 @@ module.exports = LexerLevel1
 function main () {
     let lexer = new LexerLevel1("var a = 1");
 
+    lexer.dfaParse();
+    console.log(lexer.tokens)
+
     // let lexer4 = new LexerLevel1("2 + (4 + 3)");
     //
     // lexer4.dfaParse();
     // console.log(lexer4.tokens)
 
-    let lexer5 = new LexerLevel1("++a");
-
-    lexer5.dfaParse();
-    console.log(lexer5.tokens)
+    // let lexer5 = new LexerLevel1("++a");
+    //
+    // lexer5.dfaParse();
+    // console.log(lexer5.tokens)
 }
 
-main()
+// main()
