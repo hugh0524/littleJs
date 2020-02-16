@@ -23,6 +23,10 @@ class PrimaryAstNode extends AstNode{
         }
         return Number(this.value);
     }
+
+    getRef() {
+        return this.value
+    }
 }
 
 module.exports = PrimaryAstNode

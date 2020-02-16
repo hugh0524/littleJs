@@ -53,6 +53,16 @@ class IfStatementAstNode extends AstNode{
         }
     }
 
+    showStructure() {
+        return {
+            type: this.type,
+            value: this.value,
+            test: this.test && this.test.showStructure(),
+            consequent: this.consequent && this.consequent.showStructure(),
+            alternate: this.alternate && this.alternate.showStructure()
+        }
+    }
+
 }
 
 module.exports = IfStatementAstNode

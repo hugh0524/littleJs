@@ -9,12 +9,22 @@ class AssignmentAstNode extends BinaryAstNode{
     }
 
     /**
-     * 
+     *
+     * 左值: 取地址   -》 赋值
      * @returns {*}
      */
     getValue(){
         stack.setVal(this.left.value, this.right? this.right.getValue(): undefined);
         return stack.getVal(this.left.value);
+    }
+
+    showStructure() {
+        return {
+            type: this.type,
+            value: this.value,
+            left: this.left.showStructure(),
+            right: this.right.showStructure()
+        }
     }
 }
 

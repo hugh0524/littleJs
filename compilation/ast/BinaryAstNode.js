@@ -52,6 +52,16 @@ class BinaryAstNode  extends AstNode{
         this.right = child;
         super.addChild(child)
     }
+
+    showStructure() {
+        return {
+            type: this.type,
+            value: this.value,
+            opera: this.opera,
+            left: this.left.showStructure(),
+            right: this.right.showStructure()
+        }
+    }
 }
 
 module.exports = BinaryAstNode
