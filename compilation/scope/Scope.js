@@ -19,7 +19,7 @@ class Scope {
     }
 
     /**
-     * 在当前作用域查找
+     * 在当前作用域查找,赋值
      * @param key
      * @param value
      */

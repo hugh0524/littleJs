@@ -38,8 +38,8 @@ class DeclarationAstNode extends AstNode{
         return {
             type: this.type,
             value: this.value,
-            left: this.left && this.left.showStructure(),
-            right: this.right && this.right.showStructure()
+            id: this.id && this.id.showStructure(),
+            init: this.init && this.init.showStructure()
         }
     }
 

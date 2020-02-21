@@ -12,10 +12,15 @@ class FunctionScope extends Scope{
      * 
      * @param name 名称
      */
-    constructor(name) {
+    constructor(name, callType) {
         super(name, "FUNCTION")
+        this._callType = callType; // 存储调用方式
     }
 
+    setCallType(type) {
+        this._callType = type;
+    }
+    
     
 }
 

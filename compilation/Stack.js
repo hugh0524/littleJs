@@ -21,12 +21,20 @@ class Stack {
     constructor() {
         this.stackFrames = []
         this.variables = {}
+        this._globalScope = null;
         this._initGlobal()
         this._index = 0;
     }
 
     _initGlobal() {
-        return this.pushFrame(new GlobalScope());
+        let gc = new GlobalScope();
+        gc.addVar('this', gc.variables); // 模拟this, 每个作用域都有一个this, 全局的this指向本身的属性对象
+        this._globalScope = gc;
+        return this.pushFrame(gc);
+    }
+    
+    getRootScope() {
+        return this._globalScope;
     }
 
     getIndex() {

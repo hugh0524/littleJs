@@ -5,6 +5,9 @@ const stack = require("../Stack")
 const AstNode = require("./AstNode")
 /**
  * v0.0.5
+ * 
+
+ * 
  */
 class MemberAstNode extends AstNode{
     constructor(type, value, computed) {
@@ -26,11 +29,34 @@ class MemberAstNode extends AstNode{
     }
 
     /**
-     *
+     * v0.0.6
+     *  对object对应的对象取proterty属性值
      * @returns {*}
      */
     getValue(){
+        let val = this.object.getValue();
+        if(val) {
+            return val[this.property.getRef()]
+        } else {
+            throw Error(this.object.value + " is not defined")
+        }
+    }
 
+    /**
+     * v0.0.6
+     *  member的Ref 为 当前对象
+     */
+    getRef() {
+        let val = this.object.getValue();
+        return val
+    }
+
+    /**
+     * 设置值
+     */
+    setVal(val) {
+        let obj = this.object.getValue();
+        obj[this.property.getRef()] = val
     }
 
     showStructure() {
