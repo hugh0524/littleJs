@@ -136,38 +136,38 @@ class LexerLevel1 {
             ch = code.charAt(chIndex);
             switch(state) {
                 case this.DfaState.Initial:
+                    // 对于初始状态， 我们需要直接按字符进入指定状态
                     state = this.toInitial(ch)
                     break;
                 case this.DfaState.Id_var1:
+                    // 如上图所示，如果为a,则进入var2，非a则进入标识符状态
                     if(ch === 'a') {
-                        state = this.DfaState.Id_var2
-                        this.token.value = this.token.value + ch;
+                        state = this.switchState(this.DfaState.Id_var2, ch)
                     } else if(Utils.isAlpha(ch) || Utils.isNum(ch)){
-                        state = this.switchState(this.DfaState.Identifier)
+                        state = this.switchState(this.DfaState.Identifier, ch)
                     } else {
                         state = this.toInitial(ch)
                     }
                     break;
                 case this.DfaState.Id_var2:
                     if(ch === 'r') {
-                        state = this.DfaState.Id_var2
-                        this.token.value = this.token.value + ch;
+                        state = this.switchState(this.DfaState.Var, ch)
                     } else if(Utils.isAlpha(ch) || Utils.isNum(ch)){
-                        state = this.switchState(this.DfaState.Identifier)
+                        state = this.switchState(this.DfaState.Identifier,ch)
                     } else {
                         state = this.toInitial(ch)
                     }
                     break;
-                case this.DfaState.Id_var3:
+                case this.DfaState.Var:
                     if(Utils.isAlpha(ch) || Utils.isNum(ch)){
-                        state = this.switchState(this.DfaState.Identifier)
+                        state = this.switchState(this.DfaState.Identifier, ch)
                     } else {
                         state = this.toInitial(ch)
                     }
                     break;
                 case this.DfaState.Identifier:
                     if(Utils.isAlpha(ch) || Utils.isNum(ch)){
-                        state = this.switchState(this.DfaState.Identifier)
+                        state = this.switchState(this.DfaState.Identifier, ch)
                     } else {
                         state = this.toInitial(ch)
                     }
@@ -177,6 +177,7 @@ class LexerLevel1 {
                         state = this.toInitial(ch)
                     }
                     break;
+                // 单字符直接判断
                 case this.DfaState.GT:
                 case this.DfaState.Assignment:
                 case this.DfaState.Plus:
@@ -226,4 +227,4 @@ function main () {
     console.log(lexer4.tokens)
 }
 
-// main()
+main()
