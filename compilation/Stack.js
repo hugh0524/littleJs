@@ -10,12 +10,14 @@
  *  新增栈帧结构
  *  作用域 暂时支持  全局作用于 -》 函数作用域
  *
- *
+ * v0.0.7
+ *  临时新增一个代码空间
  *
  * @version v0.0.5
  */
 
 const GlobalScope = require("./scope/GlobalScope")
+const CodeScope = require("./scope/CodeScope")
 class Stack {
 
     constructor() {
@@ -24,6 +26,8 @@ class Stack {
         this._globalScope = null;
         this._initGlobal()
         this._index = 0;
+        
+        this.codeScope = new CodeScope();
     }
 
     _initGlobal() {

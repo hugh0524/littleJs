@@ -68,7 +68,8 @@ class CallAstNode extends AstNode{
         // 根据callee 找到对应的fun
         if(this.callee) {
             // 从当前作用域内查找
-            let funcNode = stack.getVal(this.callee.getRef())
+            // let funcNode = stack.getVal(this.callee.getRef())
+            let funcNode = stack.codeScope.getVal(this.callee.getRef())
             if(funcNode) {
                 // 创建函数作用域
                 let fs = new FunctionScope(funcNode.id.getRef(), this.type);

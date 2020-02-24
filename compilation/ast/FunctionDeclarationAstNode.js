@@ -38,6 +38,9 @@ class FunctionDeclarationAstNode extends AstNode{
             // v0.0.7 匿名函数不管
             if(this.id) {
                 stack.addVar(this.id.getRef(), this)
+
+                // v0.0.7 新增代码空间, 存储运行需要的代码结构
+                stack.codeScope.addVar(this.id.getRef(), this)
             }
 
         }

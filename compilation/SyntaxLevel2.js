@@ -18,6 +18,7 @@ const NewAstNode = require("./ast/NewAstNode")
 const CallAstNode = require("./ast/CallAstNode")
 
 const stack = require("./Stack")
+
 const TokenEnum = require("./lexer/TokenEnum")
 
 
@@ -846,7 +847,7 @@ class SyntaxLevel2 {
         }
         let node = child;
         let nextToken = this.lexerLevel.tokenPeek()
-        console.log("member====3.0", child.showStructure(), nextToken)
+        console.log("member====3.0", nextToken)
         if(child) {
             while(true) {
                 if(nextToken && (nextToken.type === TokenEnum.type.LeftBracket || nextToken.type === TokenEnum.type.DOT)) {
@@ -1102,12 +1103,11 @@ function main () {
    
       a.prototype.c = function(){ this.j = 2;};
       
-      var d = a(true,2);
-      d.c()
+      var d = new a(true,2);
       this;
    `)
-     console.log("test8----", syntaxLevel8.astParse().showStructure())
-     // console.info("test8----", syntaxLevel8.exe())
+     // console.log("test8----", syntaxLevel8.astParse().showStructure())
+     console.info("test8----", syntaxLevel8.exe())
 
 }
 
