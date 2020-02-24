@@ -121,7 +121,7 @@ class SyntaxLevel1 {
         if(child && nextToken) {
             if(nextToken.type === this.lexerLevel.DfaState.Star || nextToken.type === this.lexerLevel.DfaState.Slash) {
                 nextToken = this.lexerLevel.tokenRead();
-                // 表示右侧必有一个字面量或者表达式
+                // 表示右侧必有一个字面量或者 表达式对应  MultiplicativeExpression *(/) PrimaryExpression
                 let childRight = this.multiplicative();
                 if(childRight) {
                     // 构建一个乘法表达式 AstNode
