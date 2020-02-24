@@ -16,10 +16,17 @@ class NewAstNode extends CallAstNode{
      * v0.0.6
      * new
      *   指向一个新的对象 (暂时不处理原型)
+     * v0.0.7
+     *   需要把原型上的属性赋值到当前
+     *
      * @private
      */
-    _createThisArg() {
-        return {};
+    _createThisArg(funObj) {
+        let obj = {};
+        // set prototype
+
+        obj.prototype = funObj.prototype
+        return obj;
     }
 }
 

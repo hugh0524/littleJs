@@ -11,6 +11,11 @@ class FunctionDeclarationAstNode extends AstNode{
         this.params = null;
         this.body = null;
         this._scopeParent = null;
+
+        // 定义function obj, 主要用于公用原型上的属性
+        let o = {};
+        o.prototype ={}
+        this.funObj = o;
     }
 
     addId(id) {
@@ -30,7 +35,11 @@ class FunctionDeclarationAstNode extends AstNode{
             this._scopeParent = p.id.getRef();
         } else {
             // 父级是全局作用于, 直接创建引用即可, 类似变量提升
-            stack.addVar(this.id.getRef(), this)
+            // v0.0.7 匿名函数不管
+            if(this.id) {
+                stack.addVar(this.id.getRef(), this)
+            }
+
         }
     }
 
@@ -57,12 +66,12 @@ class FunctionDeclarationAstNode extends AstNode{
 
     /**
      *
+     * 返回function obj, 用于设置原型属性
      *
      * @returns {*}
      */
     getValue(){
-         // 运行函数体内的语句即可
-        // return this.body && this.body.getValue()
+        return this.funObj; //
 
     }
     

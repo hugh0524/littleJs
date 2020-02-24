@@ -48,7 +48,7 @@ class CallAstNode extends AstNode{
      *
      * @private
      */
-    _createThisArg() {
+    _createThisArg(funObj) {
         if(this.callee) {
             if(this.callee.type === "Member") {
                 // this 指向 Ref(callee.object)
@@ -74,7 +74,7 @@ class CallAstNode extends AstNode{
                 let fs = new FunctionScope(funcNode.id.getRef(), this.type);
                 stack.pushFrame(fs)
                 // v0.0.6 
-                stack.addVar("this", this._createThisArg())
+                stack.addVar("this", this._createThisArg(funcNode.funObj))
                 let funParams = funcNode.params;
                 // arguments 处理参数
                 // 参数里的标识符, 需要绑定注入到当前作用域

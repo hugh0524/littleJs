@@ -1,20 +1,23 @@
-# v0.0.6
-是时候完善词法解析了
+# v0.0.7
+支持function的prototype
 
-> v0.0.5 不支持赋值表达式, 未实现memberExpression计算
+prototype是一个内置属性, 词法分析上只是一个普通的标识符
+
+当我们使用`.` 或者`[]` 访问对象属性时
+执行如下调用:
+1. 调用GetOwnProperty: 获取自身属性
+2. 调用GetProperty内部方法: 如自身属性获取不到,查询prototype原型上的属性 (循环查找原型链上的属性)
+3. 调用Get内部方法
+
+
+
+
+
+> v0.0.6
 
 # 功能
-1. 正则解析词法
-2. 完善原始类型支持 (支持Number, String, Boolean)
-3. 支持this关键字
-   - call 调用: this指向调用者, 并传入作用域
-   - constructor 调用: this指向新创建的空对象
-   - this指向判断逻辑如下:
-    当控制进入功能对象F中包含的功能代码的执行上下文，thisArg判断将执行以下步骤：
-     1. 如果功能代码是严格代码，请将ThisBinding设置为thisArg。
-     2. 如果thisArg为null或未定义，则将ThisBinding设置为全局对象。
-     3. 如果Type（thisArg）不是Object，则将ThisBinding设置为ToObject（thisArg）。
-     4. 否则将ThisBinding设置为thisArg。
+1.
+
 
 # test
 运行SyntaxLevel2.js 内置main方法即可

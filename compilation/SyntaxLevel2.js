@@ -846,7 +846,7 @@ class SyntaxLevel2 {
         }
         let node = child;
         let nextToken = this.lexerLevel.tokenPeek()
-        console.log("member====3.0", child, nextToken)
+        console.log("member====3.0", child.showStructure(), nextToken)
         if(child) {
             while(true) {
                 if(nextToken && (nextToken.type === TokenEnum.type.LeftBracket || nextToken.type === TokenEnum.type.DOT)) {
@@ -1067,32 +1067,47 @@ function main () {
    //  console.log("test8----", syntaxLevel8.astParse().showStructure())
    //
    //
-    let syntaxLevel6 = new SyntaxLevel2(`
-      function a(b,c){
-   
-        this.j = 1;
-        this.k = b+c;
-      }
-   
-      var d = new a(4,2);
-      d;
-   `)
-    // console.log("test6----", syntaxLevel6.astParse().showStructure())
-    // console.info("test6----", syntaxLevel6.exe())
+   //  let syntaxLevel6 = new SyntaxLevel2(`
+   //    function a(b,c){
+   //
+   //      this.j = 1;
+   //      this.k = b+c;
+   //    }
+   //
+   //    var d = new a(4,2);
+   //    d;
+   // `)
+   //  // console.log("test6----", syntaxLevel6.astParse().showStructure())
+   //  // console.info("test6----", syntaxLevel6.exe())
+   //
+   //  let syntaxLevel7 = new SyntaxLevel2(`
+   //    function a(b,c){
+   //
+   //      this.j = 1;
+   //      this.k = b+c;
+   //    }
+   //
+   //    var d = a(true,2);
+   //    this;
+   // `)
+   //  // console.log("test7----", syntaxLevel6.astParse().showStructure())
+   //  console.info("test7----", syntaxLevel7.exe())
 
-    let syntaxLevel7 = new SyntaxLevel2(`
+    let syntaxLevel8 = new SyntaxLevel2(`
       function a(b,c){
    
         this.j = 1;
         this.k = b+c;
       }
    
+      a.prototype.c = function(){ this.j = 2;};
+      
       var d = a(true,2);
+      d.c()
       this;
    `)
-    // console.log("test7----", syntaxLevel6.astParse().showStructure())
-    console.info("test7----", syntaxLevel7.exe())
-
+     console.log("test8----", syntaxLevel8.astParse().showStructure())
+     // console.info("test8----", syntaxLevel8.exe())
 
 }
 

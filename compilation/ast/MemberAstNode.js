@@ -36,6 +36,10 @@ class MemberAstNode extends AstNode{
     getValue(){
         let val = this.object.getValue();
         if(val) {
+            // 函数类型的取内置的funObj
+            if(val.type === "Function") {
+                val = val.funObj;
+            }
             return val[this.property.getRef()]
         } else {
             throw Error(this.object.value + " is not defined")
@@ -48,6 +52,7 @@ class MemberAstNode extends AstNode{
      */
     getRef() {
         let val = this.object.getValue();
+
         return val
     }
 
@@ -56,6 +61,7 @@ class MemberAstNode extends AstNode{
      */
     setVal(val) {
         let obj = this.object.getValue();
+        console.log("=====1", obj, this.object.showStructure())
         obj[this.property.getRef()] = val
     }
 
