@@ -118,7 +118,7 @@ class LexerForJson {
                 state = this.DfaState.False_1
             } else {
                 // 其他的非"开始的数据将报错
-                throw Error("error type")
+                throw Error(`不支持的Token: ${ch}`)
             }
             this.token.type = state
             this.token.value = this.token.value + ch;
@@ -130,8 +130,10 @@ class LexerForJson {
             state = this.tokenMap[ch]
             this.token.type = this.tokenMap[ch]
             this.token.value = this.token.value + ch;
+        } else if(ch === " ") {
+            this.token.value = ""; // 用于跳过
         } else {
-            throw Error(`not support char ${ch}`)
+            throw Error(`不支持的Token: ${ch}`)
         }
 
         return state;
@@ -170,28 +172,28 @@ class LexerForJson {
                     } else if(Utils.isAlpha(ch) || Utils.isNum(ch)) {
                         state = this.switchState(this.DfaState.String, ch)
                     } else {
-                        throw Error("error String ch -1")
+                        throw Error(`String类型中不支持该字符: ${ch}`)
                     }
                     break;
                 case this.DfaState.Null_1:
                     if(ch === 'u') {
                         state = this.switchState(this.DfaState.Null_2, ch)
                     } else {
-                        throw Error("error null ch -2")
+                        throw Error(`您是想输入null吗? `)
                     }
                     break;
                 case this.DfaState.Null_2:
                     if(ch === 'l') {
                         state = this.switchState(this.DfaState.Null_3, ch)
                     } else {
-                        throw Error("error null ch -3")
+                        throw Error(`您是想输入null吗? `)
                     }
                     break;
                 case this.DfaState.Null_3:
                     if(ch === 'l') {
                         state = this.switchState(this.DfaState.Null, ch)
                     } else {
-                        throw Error("error null ch -4")
+                        throw Error(`您是想输入null吗? `)
                     }
                     break;
                 case this.DfaState.Null:
@@ -201,21 +203,21 @@ class LexerForJson {
                     if(ch === 'r') {
                         state = this.switchState(this.DfaState.True_2, ch)
                     } else {
-                        throw Error("error ch -3")
+                        throw Error(`您是想输入true吗? `)
                     }
                     break;
                 case this.DfaState.True_2:
                     if(ch === 'u') {
                         state = this.switchState(this.DfaState.True_3, ch)
                     } else {
-                        throw Error("error ch -3")
+                        throw Error(`您是想输入true吗? `)
                     }
                     break;
                 case this.DfaState.True_3:
                     if(ch === 'e') {
                         state = this.switchState(this.DfaState.True, ch)
                     } else {
-                        throw Error("error ch -3")
+                        throw Error(`您是想输入true吗? `)
                     }
                     break;
                 case this.DfaState.True:
@@ -225,28 +227,28 @@ class LexerForJson {
                     if(ch === 'a') {
                         state = this.switchState(this.DfaState.False_2, ch)
                     } else {
-                        throw Error("error false ch -3")
+                        throw Error(`您是想输入false吗? `)
                     }
                     break;
                 case this.DfaState.False_2:
                     if(ch === 'l') {
                         state = this.switchState(this.DfaState.False_3, ch)
                     } else {
-                        throw Error("error false ch -3")
+                        throw Error(`您是想输入false吗? `)
                     }
                     break;
                 case this.DfaState.False_3:
                     if(ch === 's') {
                         state = this.switchState(this.DfaState.False_4, ch)
                     } else {
-                        throw Error("error false ch -3")
+                        throw Error(`您是想输入false吗? `)
                     }
                     break;
                 case this.DfaState.False_4:
                     if(ch === 'e') {
                         state = this.switchState(this.DfaState.False, ch)
                     } else {
-                        throw Error("error false ch -3")
+                        throw Error(`您是想输入false吗? `)
                     }
                     break;
                 case this.DfaState.False:
@@ -291,11 +293,14 @@ module.exports = LexerForJson
 
 function main () {
     let obj = {a:1, b: "1", c:[1,3.3, {a:1}]}
-    console.log(JSON.stringify(obj))
-   let lexer = new LexerForJson(JSON.stringify(obj))
-
+    let lexer = new LexerForJson(JSON.stringify(obj))
     lexer.dfaParse()
     console.log(lexer.tokens)
+
+    // 测试错误
+    let lexer2 = new LexerForJson('{"a" : tru}')
+    lexer2.dfaParse()
+    console.log(lexer2.tokens)
 }
 
 main()
