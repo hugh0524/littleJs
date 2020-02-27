@@ -50,14 +50,11 @@ class SyntaxLevel1 {
         let nextToken = this.lexerLevel.tokenPeek()
         while(nextToken) {
 
-            // console.log("=====2",nextToken)
             // 1
             let cv = this.variable();
-            // console.log("====3.1" ,cv)
             if(!cv) {
                 cv = this.assignment()
             }
-            // console.log("====3.2" ,cv)
             // 2
             if(!cv) {
                 cv = this.bitwiseShift()
@@ -82,7 +79,7 @@ class SyntaxLevel1 {
      */
     exe() {
         let n = this.astParse()
-        console
+
         return n.getValue();
     }
 
@@ -173,34 +170,6 @@ class SyntaxLevel1 {
                 throw Error("error assignment expression")
             }
         }
-
-        // if(nextToken && nextToken.type === this.lexerLevel.DfaState.Identifier) {
-        //     // 定义一个Identifier类型节点
-        //     // child = this.bitwiseShift();
-        //     tempToken = nextToken;
-        //     nextToken = this.lexerLevel.tokenPeek();
-        //     if(nextToken && nextToken.type === this.lexerLevel.DfaState.Assignment) {
-        //         this.lexerLevel.tokenRead();
-        //         // 预测是一个赋值语句
-        //         node = new AssignmentAstNode("Assignment")
-        //         let childRight = this.bitwiseShift();
-        //         if(childRight) {
-        //             node.addLeftChild(child)
-        //             node.addRightChild(child)
-        //             // 判断最后一个;
-        //             nextToken = this.lexerLevel.tokenPeek();
-        //             if(nextToken && nextToken.type === this.lexerLevel.DfaState.SemiColon) {
-        //                 this.lexerLevel.tokenRead(); // 读取出分号
-        //             } else {
-        //                 throw Error("lost SemiColon in the end of assignment expression")
-        //             }
-        //         } else {
-        //             throw Error("error assignment expression")
-        //         }
-        //     } else {
-        //         node =  child ; // TODO
-        //     }
-        // }
 
         return node;
 
