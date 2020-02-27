@@ -26,10 +26,12 @@ const stack = require("./Stack")
  * 3. 定义additive Expression
  *
  * 解析如下语法:
- *   var a =1;
- *   var b = 2;
- *   a = b +3;
  *
+ * if(a >2)
+ *   if(a<4)
+ *       a=3;
+ *   else
+ *     a=4;
  */
 class SyntaxLevel1 {
     constructor(code) {
