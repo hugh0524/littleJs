@@ -148,7 +148,7 @@ class LexerForJson {
     /**
      * 运行自动机,解析出token
      *
-     * fix : v0.0.1, v0.0.2 var语言的bug
+     *
      * 
      */
     dfaParse() {
@@ -303,4 +303,4 @@ function main () {
     console.log(lexer2.tokens)
 }
 
-main()
+// main()
