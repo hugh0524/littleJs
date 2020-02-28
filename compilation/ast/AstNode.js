@@ -26,7 +26,7 @@ class AstNode{
         for(let i =0; i< this.children.length; i++){
             let child = this.children[i]
             if(funcParent) {
-                // function 内才支持return
+                // function 内才支持return (TODO: 判断是否是对象类型 )
                 if(child.type === "Return") {
                     return child.getValue()
                 }
