@@ -255,6 +255,47 @@ class SyntaxLevel2 {
         return node;
     }
 
+
+    /**
+     * v0.0.7
+     *
+     *  IterationStatement :
+     *      while ( Expression ) Statement
+     */
+    whileStatement() {
+        let node = null;
+        let nextToken = this.lexerLevel.tokenPeek()
+        if(nextToken && nextToken.type === TokenEnum.type.WHILE) {
+            this.lexerLevel.tokenRead();
+            node = new IfStatementAstNode('whileStatement', 'while')
+            nextToken = this.lexerLevel.tokenPeek()
+            if(nextToken && nextToken.type === TokenEnum.type.LeftParen) {
+                this.lexerLevel.tokenRead();
+                // 判断出test
+                let childTest = this.lowestExpression();
+                if(childTest) {
+                    node.addTest(childTest)
+                    nextToken = this.lexerLevel.tokenPeek()
+                    if(nextToken && nextToken.type === TokenEnum.type.RightParen) {
+                        this.lexerLevel.tokenRead();
+
+                        // 进入statement
+                        let child1 = this.statement();
+                        if(child1) {
+                            node.addBody(child1)
+                        }
+
+
+                    }
+
+
+                }
+
+            }
+        }
+
+    }
+
     /**
      * v0.0.4
      * 

@@ -31,6 +31,17 @@ class AstNode{
                 if(child.type === "Return" || child.type === TokenEnum.type.RETURN) {
                     return child.getValue()
                 }
+            } else {
+                let parent = this.parent;
+                if(parent.isIteration) {
+                    if(child.type === TokenEnum.type.CONTINUE ) {
+                        return {__type__: "continue"}
+                    } else if(child.type === TokenEnum.type.BREAK) {
+                        return {__type__: "break"}
+                    } else if(child.type === TokenEnum.type.RETURN) {
+                        return {__type__: "return", obj: child.getValue()}
+                    }
+                }
             }
             last = child.getValue()
         }
