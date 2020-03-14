@@ -33,7 +33,7 @@ class AstNode{
                 }
             } else {
                 let parent = this.parent;
-                if(parent.isIteration) {
+                if(parent && parent.isIteration) {
                     if(child.type === TokenEnum.type.CONTINUE ) {
                         return {__type__: "continue"}
                     } else if(child.type === TokenEnum.type.BREAK) {
