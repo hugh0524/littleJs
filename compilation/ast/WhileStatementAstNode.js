@@ -39,6 +39,7 @@ class WhileStatementAstNode extends IterationStatementAstNode{
         let testVal = !!(this.test.getValue()) // 转换成boolean
         while(testVal) {
             let val = this.body.getValue();
+            testVal = !!(this.test.getValue())
             if(val) {
                 if(val.__type__ === "continue") {
                     continue;

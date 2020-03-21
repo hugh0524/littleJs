@@ -9,6 +9,10 @@ const PrimaryAstNode = require("./ast/PrimaryAstNode")
 const AssignmentAstNode = require("./ast/AssignmentAstNode")
 const DeclarationAstNode = require("./ast/DeclarationAstNode")
 const IfStatementAstNode = require("./ast/IfStatementAstNode")
+const WhileStatementAstNode = require("./ast/WhileStatementAstNode")
+const ForStatementAstNode = require("./ast/ForStatementAstNode")
+const ContinueAstNode = require("./ast/ContinueAstNode")
+const BreakAstNode = require("./ast/BreakAstNode")
 const BlockAstNode = require("./ast/BlockAstNode")
 const ReturnStatementAstNode = require("./ast/ReturnStatementAstNode")
 const FunctionDeclarationAstNode = require("./ast/FunctionDeclarationAstNode")
@@ -81,6 +85,18 @@ class SyntaxLevel2 {
                 // console.log("====4", cv)
             }
 
+            /**
+             * v0.0.7 新增while, for
+             */
+            if(!cv) {
+                cv = this.whileStatement();
+                // console.log("====4", cv)
+            }
+            if(!cv) {
+                cv = this.forStatement();
+                // console.log("====4", cv)
+            }
+
             // if(!cv) {
             //     cv = this.newExpression()
             // }
@@ -149,7 +165,6 @@ class SyntaxLevel2 {
     functionStatement() {
         let node = null;
         let nextToken = this.lexerLevel.tokenPeek()
-        console.log("function====4.0", nextToken)
         // 判断出Function
         if(nextToken && nextToken.type === TokenEnum.type.FUNCTION) {
             this.lexerLevel.tokenRead()
@@ -255,6 +270,65 @@ class SyntaxLevel2 {
         return node;
     }
 
+    /**
+     * IterationStatement :
+     *      for (ExpressionNoInopt ; Expressionopt ; Expressionopt) Statement
+     * @returns {*}
+     */
+    forStatement() {
+        let node = null;
+        let nextToken = this.lexerLevel.tokenPeek()
+        console.log("for======0", nextToken, TokenEnum.type.FOR)
+        if(nextToken && nextToken.type === TokenEnum.type.FOR) {
+            this.lexerLevel.tokenRead();
+            node = new ForStatementAstNode('forStatement', 'for');
+            nextToken = this.lexerLevel.tokenPeek()
+            console.log("for======1.1", nextToken, TokenEnum.type.FOR)
+            if(nextToken && nextToken.type === TokenEnum.type.LeftParen) {
+                // 分解for语句内的三个语句
+                console.log("for======1", nextToken)
+                this.lexerLevel.tokenRead();
+                nextToken = this.lexerLevel.tokenPeek()
+                let forExpCount = 1; // 用于记录数量
+                while(nextToken && nextToken.type !== TokenEnum.type.RightParen) {
+                    // 依次取出三个表达式
+                    // 第一个表达式,可以是 var
+                    let childTest = null
+                    if(forExpCount == 1) {
+                        childTest = this.variable()
+                    }
+                    if(!childTest) {
+                        childTest = this.lowestExpression();
+                    }
+                    node[forExpCount === 1? "addInit": (forExpCount === 2? "addTest" : "addUpdate")](childTest)
+                    forExpCount ++;
+                    nextToken = this.lexerLevel.tokenPeek()
+                    if(nextToken && nextToken.type === TokenEnum.type.SemiColon) {
+                        this.lexerLevel.tokenRead();
+                        nextToken = this.lexerLevel.tokenPeek()
+                    }
+                }
+                // 简单判断语句异常
+                if(forExpCount != 3 && forExpCount != 4) {
+                    throw Error("expression error in forStatement")
+                }
+                if(nextToken && nextToken.type === TokenEnum.type.RightParen) {
+                    this.lexerLevel.tokenRead();
+                    // 解析函数体
+                    // 进入statement
+                    let child1 = this.statement();
+                    if(child1) {
+                        node.addBody(child1)
+                    }
+                }else {
+                    throw Error("lost right paren in forStatement")
+                }
+            }
+
+        }
+
+        return node;
+    }
 
     /**
      * v0.0.7
@@ -267,9 +341,10 @@ class SyntaxLevel2 {
         let nextToken = this.lexerLevel.tokenPeek()
         if(nextToken && nextToken.type === TokenEnum.type.WHILE) {
             this.lexerLevel.tokenRead();
-            node = new IfStatementAstNode('whileStatement', 'while')
+            node = new WhileStatementAstNode('whileStatement', 'while')
             nextToken = this.lexerLevel.tokenPeek()
             if(nextToken && nextToken.type === TokenEnum.type.LeftParen) {
+                console.log("while======1", nextToken)
                 this.lexerLevel.tokenRead();
                 // 判断出test
                 let childTest = this.lowestExpression();
@@ -277,6 +352,7 @@ class SyntaxLevel2 {
                     node.addTest(childTest)
                     nextToken = this.lexerLevel.tokenPeek()
                     if(nextToken && nextToken.type === TokenEnum.type.RightParen) {
+                        console.log("while======2", nextToken)
                         this.lexerLevel.tokenRead();
 
                         // 进入statement
@@ -294,6 +370,28 @@ class SyntaxLevel2 {
             }
         }
 
+        return node;
+
+    }
+
+    continueStatement() {
+        let node = null;
+        let nextToken = this.lexerLevel.tokenPeek()
+        if(nextToken && nextToken.type === TokenEnum.type.CONTINUE) {
+            node = new ContinueAstNode();
+            this.lexerLevel.tokenRead();
+        }
+        return node;
+    }
+
+    breakStatement() {
+        let node = null;
+        let nextToken = this.lexerLevel.tokenPeek()
+        if(nextToken && nextToken.type === TokenEnum.type.BREAK) {
+            node = new BreakAstNode();
+            this.lexerLevel.tokenRead();
+        }
+        return node;
     }
 
     /**
@@ -315,15 +413,18 @@ class SyntaxLevel2 {
             // 构建一个if Ast
             node = new IfStatementAstNode('ifStatement', 'if')
             nextToken = this.lexerLevel.tokenPeek()
+            console.log("if====1", nextToken)
             if(nextToken && nextToken.type === TokenEnum.type.LeftParen) {
                 this.lexerLevel.tokenRead();
                 // test语句检查 TODO 暂时使用该 Expression
                 let childTest = this.lowestExpression();
                 if(childTest) {
                     node.addTest(childTest)
+                    console.log("if====1", childTest)
                     // 判断 )
                     nextToken = this.lexerLevel.tokenPeek()
                     if(nextToken && nextToken.type === TokenEnum.type.RightParen) {
+                        console.log("if====2", nextToken)
                         this.lexerLevel.tokenRead();
                         // 开始进入 statement区域判断
                         let child1 = this.statement();
@@ -335,6 +436,7 @@ class SyntaxLevel2 {
                         // 判断else语句
                         nextToken = this.lexerLevel.tokenPeek()
                         if(nextToken && nextToken.type === TokenEnum.type.ELSE) {
+                            console.log("if====3", nextToken)
                             this.lexerLevel.tokenRead();
                             // 构建一个else代码块
                             let child2 = this.statement();
@@ -371,12 +473,14 @@ class SyntaxLevel2 {
         let node = null;
         let nextToken = this.lexerLevel.tokenPeek()
         if(nextToken && nextToken.type === TokenEnum.type.LeftBrace) {
+            console.log("block====1", nextToken)
             node = new BlockAstNode("Block", "")
             this.lexerLevel.tokenRead();
             nextToken = this.lexerLevel.tokenPeek()
             // todo 异常判断
             while(nextToken && nextToken.type !== TokenEnum.type.RightBrace){
                 let child = this.statement();
+                console.log("block====1", child, nextToken)
                 if(child) {
                     // 构建子级ast
                     node.addChild(child)
@@ -445,12 +549,30 @@ class SyntaxLevel2 {
      *
      */
     statement() {
+        // 消耗;  暂时处理 TODO
+        let nextToken = this.lexerLevel.tokenPeek()
+        if(nextToken.type === TokenEnum.type.SemiColon) {
+            this.lexerLevel.tokenRead()
+        }
+
         let node = this.block()
         if(!node) {
             node = this.variable()
         }
         if(!node) {
             node = this.ifStatement()
+        }
+        if(!node) {
+            node = this.whileStatement()
+        }
+        if(!node) {
+            node = this.forStatement()
+        }
+        if(!node) {
+            node = this.continueStatement()
+        }
+        if(!node) {
+            node = this.breakStatement()
         }
         if(!node) {
             node = this.returnStatement()
@@ -488,7 +610,6 @@ class SyntaxLevel2 {
         let node = null;
         let nextToken = this.lexerLevel.tokenPeek()
         let tempToken = nextToken;
-        console.log("var===0", nextToken)
         if(nextToken && nextToken.type === TokenEnum.type.VAR) {
             node = new DeclarationAstNode("Declaration")
             this.lexerLevel.tokenRead();
@@ -544,7 +665,6 @@ class SyntaxLevel2 {
 
         let nextToken = this.lexerLevel.tokenPeek()
         let tempToken = null;
-        console.log("assignment===0", nextToken, child && child.showStructure())
         if(nextToken && nextToken.type === TokenEnum.type.Assignment) {
             this.lexerLevel.tokenRead();
             console.log("assignment===1", this.lexerLevel.tokenPeek())
@@ -556,12 +676,11 @@ class SyntaxLevel2 {
                 node.addRightChild(childRight)
                 // 判断最后一个;
                 nextToken = this.lexerLevel.tokenPeek();
-                console.log("assignment===2", nextToken)
-                if(nextToken && nextToken.type === TokenEnum.type.SemiColon) {
-                    this.lexerLevel.tokenRead(); // 读取出分号
-                } else {
-                    throw Error("lost SemiColon in the end of assignment expression")
-                }
+                console.log("assignment===2", nextToken, node.showStructure())
+                // v0.0.7 ; 逻辑不在特定表达式处理
+                // if(nextToken && nextToken.type === TokenEnum.type.SemiColon) {
+                //     this.lexerLevel.tokenRead(); // 读取出分号
+                // }
             } else {
                 throw Error("error assignment expression")
             }
@@ -601,7 +720,7 @@ class SyntaxLevel2 {
         if(child ) {
             while(true) {
                 let nextToken = this.lexerLevel.tokenPeek()
-                if(nextToken && (nextToken.type === TokenEnum.type.GT || nextToken.type === TokenEnum.type.GE || nextToken.type === TokenEnum.type.LE || nextToken.type === TokenEnum.type.LT)) {
+                if(nextToken && ([TokenEnum.type.EQ, TokenEnum.type.SEQ, TokenEnum.type.NotEQ, TokenEnum.type.SNotEQ].includes(nextToken.type) || nextToken.type === TokenEnum.type.GT || nextToken.type === TokenEnum.type.GE || nextToken.type === TokenEnum.type.LE || nextToken.type === TokenEnum.type.LT)) {
                     nextToken = this.lexerLevel.tokenRead();
                     let childRight = this.bitwiseShift();
                     if(childRight) {
@@ -836,7 +955,6 @@ class SyntaxLevel2 {
     newExpression() {
         let node = null;
         let nextToken = this.lexerLevel.tokenPeek()
-        console.log("new====0", nextToken)
         if(nextToken && nextToken.type === TokenEnum.type.NEW) {
             node = this.memberExpression();
 
@@ -888,7 +1006,6 @@ class SyntaxLevel2 {
         }
         let node = child;
         let nextToken = this.lexerLevel.tokenPeek()
-        console.log("member====3.0", nextToken)
         if(child) {
             while(true) {
                 if(nextToken && (nextToken.type === TokenEnum.type.LeftBracket || nextToken.type === TokenEnum.type.DOT)) {
@@ -954,7 +1071,6 @@ class SyntaxLevel2 {
     arguments() {
         let node = null;
         let nextToken = this.lexerLevel.tokenPeek()
-        console.log("arguments====0", nextToken)
         if(nextToken && nextToken.type === TokenEnum.type.LeftParen) {
             node = []
             this.lexerLevel.tokenRead()
@@ -993,7 +1109,6 @@ class SyntaxLevel2 {
      *      CallExpression
      */
     leftHandSideExpression() {
-        console.log("Left====0")
         let node = this.newExpression()
         if(!node) {
             node = this.callExpression()
@@ -1022,7 +1137,6 @@ class SyntaxLevel2 {
 
         // 预读判断
         let nextToken = this.lexerLevel.tokenPeek()
-        console.log("primary====0", nextToken)
         if(nextToken) {
             // 判断是否符合文法规则
             if(nextToken.type === TokenEnum.type.THIS) {
@@ -1061,6 +1175,8 @@ class SyntaxLevel2 {
     }
 
 }
+
+module.exports = SyntaxLevel2
 
 /**
  *
@@ -1152,4 +1268,4 @@ function main () {
 
 }
 
-main()
+// main()

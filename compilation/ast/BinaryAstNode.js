@@ -14,7 +14,7 @@ class BinaryAstNode  extends AstNode{
     }
 
     getValue(){
-         console.log('=====binary params', this.opera, this.left.getValue(), this.right.getValue())
+        console.log('=====binary params', this.opera, this.left.getValue(), this.right.getValue())
         switch(this.opera) {
             case TokenEnum.type.Addition:
             case "Plus":
@@ -52,6 +52,10 @@ class BinaryAstNode  extends AstNode{
             case TokenEnum.type.LE:
             case "LE":
                 return this.left.getValue() <= this.right.getValue();
+            case TokenEnum.type.EQ:
+                return this.left.getValue() == this.right.getValue();
+            case TokenEnum.type.SEQ:
+                return this.left.getValue() === this.right.getValue();
         }
         return NaN
     }

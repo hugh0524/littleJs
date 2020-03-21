@@ -32,7 +32,7 @@ class AssignmentAstNode extends BinaryAstNode{
      * @returns {*}
      */
     getValue(){
-        console.log("===ass", this.left.showStructure(), this.right.showStructure())
+        // console.log("===ass", this.left.showStructure(), this.right.showStructure())
         let rVal = this.right? this.right.getValue(): undefined;
         if(this.left.type === "Member") {
             this.left.setVal(rVal)

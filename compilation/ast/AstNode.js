@@ -15,9 +15,9 @@ class AstNode{
     }
 
     addChild(child) {
-        this.children.push(child)
+        child && this.children.push(child)
         //child.parent = this;
-        child.setParent(this)
+        child && child.setParent(this)
     }
 
 
@@ -32,8 +32,9 @@ class AstNode{
                     return child.getValue()
                 }
             } else {
-                let parent = this.parent;
-                if(parent && parent.isIteration) {
+                let isInIteration = this.isInIteration();
+                // console.log("====", isInIteration, child.type,TokenEnum.type.CONTINUE)
+                if(isInIteration) {
                     if(child.type === TokenEnum.type.CONTINUE ) {
                         return {__type__: "continue"}
                     } else if(child.type === TokenEnum.type.BREAK) {
@@ -44,6 +45,10 @@ class AstNode{
                 }
             }
             last = child.getValue()
+            // v0.0.7 fix 语句中断
+            if(last && ["continue", "break", "return"].includes(last.__type__)){
+                return last;
+            }
         }
         // v0.0.6 如果是函数内, 并且通过new调用的, 需要返回 this
         if(funcParent) {
@@ -82,6 +87,23 @@ class AstNode{
             }
         }
         return p;
+    }
+
+    /**
+     * v0.0.7 简单查找直接或间接父级是否是迭代语句
+     * 
+     * @returns {boolean}
+     */
+    isInIteration() {
+        let p = this.parent;
+        while(p) {
+            if(p.isIteration) {
+                return true;
+            } else {
+                p = p.parent
+            }
+        }
+        return false;
     }
 
     showStructure() {

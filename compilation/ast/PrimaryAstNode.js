@@ -22,7 +22,6 @@ class PrimaryAstNode extends AstNode{
      * @returns {*}
      */
     getValue(){
-        console.log("====1234",this.type)
         if(this.type === TokenEnum.type.Identifier) {
             if(stack.hasVar(this.value)) {
                 // v0.0.6 类型系统支持

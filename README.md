@@ -11,12 +11,16 @@ prototype是一个内置属性, 词法分析上只是一个普通的标识符
 
 模拟栈和堆存放数据
 
+1. 新增while语句支持
+2. 新增for语句支持
+3. 新增break,continue
+
 
 
 
 
 # test
-运行SyntaxLevel2.js 内置main方法即可
+运行 test 目录下的测试用例即可
 
 ## demo1
 ```
