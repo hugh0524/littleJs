@@ -13,7 +13,7 @@
  * v0.0.7
  *  临时新增一个代码空间
  *
- * @version v0.0.5
+ * @version v0.0.7
  */
 
 const GlobalScope = require("./scope/GlobalScope")

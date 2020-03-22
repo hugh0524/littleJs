@@ -180,27 +180,6 @@ class SyntaxLevel2 {
             }
             console.log("function====4.3", nextToken)
             if(nextToken && nextToken.type === TokenEnum.type.LeftParen) {
-                // this.lexerLevel.tokenRead()
-                // // 进入参数判断, 遇到 `)` 前, 按`,`分割参数
-                // let nextParam = this.lexerLevel.tokenPeek()
-                // while(nextParam && nextParam.type != TokenEnum.type.RightParen) {
-                //     if(nextParam.type !== TokenEnum.type.Identifier) {
-                //         throw Error("function param must be Identifier")
-                //     }
-                //     let pNode = new AstNode(TokenEnum.type.Identifier, nextParam.value)
-                //     node.addParams(pNode)
-                //     this.lexerLevel.tokenRead()
-                //     // 判断分隔符
-                //     nextParam = this.lexerLevel.tokenPeek()
-                //     if(nextParam && nextParam.type === TokenEnum.type.Comma) {
-                //         // 消耗掉 `,`
-                //         this.lexerLevel.tokenRead()
-                //     }
-                //     nextParam = this.lexerLevel.tokenPeek()
-                // }
-                // if(nextParam && nextParam.type === TokenEnum.type.RightParen) {
-                //     this.lexerLevel.tokenRead()
-                // }
                 let params = this.arguments();
                 for(let i= 0; i<params.length; i++) {
                     node.addParams(params[i])
@@ -1183,9 +1162,9 @@ module.exports = SyntaxLevel2
  */
 function main () {
 
-    // console.log = function() {
-    //     // 去掉log
-    // }
+    console.log = function() {
+        // 去掉log
+    }
 
    // let syntaxLevel = new SyntaxLevel2(`
    //    var a = b+1;
@@ -1263,8 +1242,8 @@ function main () {
       var d = new a(true,2);
       this;
    `)
-     // console.log("test8----", syntaxLevel8.astParse().showStructure())
-     console.info("test8----", syntaxLevel8.exe())
+     console.info("test8----", syntaxLevel8.astParse().showStructure())
+     // console.info("test8----", syntaxLevel8.exe())
 
 }
 
